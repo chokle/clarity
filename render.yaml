@@ -1,0 +1,13 @@
+services:
+  - type: worker
+    name: clarity-watchdog
+    runtime: python
+    buildCommand: "pip install --no-cache-dir -r requirements.txt"
+    startCommand: "python bot.py"
+    envVars:
+      - key: TELEGRAM_TOKEN
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: WATCHDOG_MODEL
+        value: gpt-4o-mini
