@@ -7,18 +7,24 @@ in the group so everyone sees them.
 
 Commands in the group: `/pause`, `/resume`.
 
-## Deploy on Render
+## Deploy on Render (free)
 
-1. Create a new **Background Worker** on Render from this repo
-   (or use the `render.yaml` blueprint).
+1. Create a new **Web Service** on Render from this repo
+   (or use the `render.yaml` blueprint) — pick the **Free** plan.
+   (Background workers are paid-only; a web service works because the bot
+   long-polls and just needs to stay awake.)
 2. Set these environment variables in the Render dashboard — the keys never
    go through any chat:
    - `TELEGRAM_TOKEN` — bot token from [@BotFather](https://t.me/BotFather)
    - `OPENAI_API_KEY` — from https://platform.openai.com/api-keys
    - `WATCHDOG_MODEL` — optional, defaults to `gpt-4o-mini`
-3. In [@BotFather](https://t.me/BotFather): `/setprivacy` → pick your bot →
+3. Keep it awake: free web services sleep after 15 min with no traffic.
+   Add a free monitor at https://uptimerobot.com pointed at
+   `https://<your-service>.onrender.com/health` every 5 minutes.
+   (One free service running 24/7 fits inside Render's 750 free hours/month.)
+4. In [@BotFather](https://t.me/BotFather): `/setprivacy` → pick your bot →
    **Disable**, so it can read all group messages (not just commands).
-4. Create your Telegram group, add the other party and the bot. Done —
+5. Create your Telegram group, add the other party and the bot. Done —
    Clarity starts watching immediately.
 
 ## Rotate exposed keys
