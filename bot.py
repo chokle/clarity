@@ -149,25 +149,30 @@ def describe_message(msg):
     return "[non-text message]"
 
 
-def handle_command(chat_id, text, state, sender):
+def handle_dm_command(chat_id, text, state, sender):
+    """Commands in a private chat with the bot. First /start registers owner."""
     cmd = text.split()[0].split("@")[0].lower()
-    if cmd == "/pause":
-        if chat_id not in state["paused"]:
-            state["paused"].append(chat_id)
-            save_state(state)
+    if cmd == "/start":
+        state["owner_id"] = chat_id
+        state["owner_name"] = sender
+        save_state(state)
         tg("sendMessage", {"chat_id": chat_id,
-                           "text": "⏸️ Watchdog paused by {}. /resume to restart.".format(sender)})
+                           "text": "You're registered. Add me to a group and I'll keep "
+                                   "track of the conversation, messaging you here privately "
+                                   "if anything needs your attention. /pause pauses watching, "
+                                   "/resume restarts it."})
+    elif cmd == "/pause":
+        state["paused_all"] = True
+        save_state(state)
+        tg("sendMessage", {"chat_id": chat_id, "text": "Paused. Nothing is being watched."})
     elif cmd == "/resume":
-        if chat_id in state["paused"]:
-            state["paused"].remove(chat_id)
-            save_state(state)
-        tg("sendMessage", {"chat_id": chat_id, "text": "▶️ Watchdog resumed."})
-    elif cmd == "/start":
+        state["paused_all"] = False
+        save_state(state)
+        tg("sendMessage", {"chat_id": chat_id, "text": "Resumed. Watching again."})
+    elif cmd == "/status":
+        n = len(state.get("chats", {}))
         tg("sendMessage", {"chat_id": chat_id,
-                           "text": "I'm Clarity, a watchdog for this chat. "
-                                   "I flag deception, unfair terms, and manipulation. "
-                                   "I stay quiet unless something looks off. "
-                                   "Commands: /pause /resume."})
+                           "text": "Watching {} group(s). Alerts come here, never in the group.".format(n)})
 
 
 def main():
@@ -224,18 +229,16 @@ def main():
 
             if chat_type == "private":
                 if text.startswith("/"):
-                    handle_command(chat_id, text, state, name)
+                    handle_dm_command(chat_id, text, state, name)
                 else:
                     tg("sendMessage", {"chat_id": chat_id,
-                                       "text": "Add me to a group chat and I'll watch it. "
-                                               "Commands: /pause /resume."})
+                                       "text": "I'm Clarity. Add me to a group chat and I'll keep "
+                                               "track of the conversation for you. Send /start to "
+                                               "register for private alerts."})
                 continue
 
-            # group / supergroup
-            if text.startswith("/"):
-                handle_command(chat_id, text, state, name)
-                continue
-            if chat_id in state["paused"]:
+            # group / supergroup: total silence. Analyze, alert owner by DM only.
+            if state.get("paused_all"):
                 continue
 
             key = str(chat_id)
@@ -247,12 +250,16 @@ def main():
             save_state(state)
 
             if verdict and verdict.get("flag"):
-                sev = verdict.get("severity", "medium")
+                owner = state.get("owner_id")
                 note = verdict.get("note", "Something looks off.")
-                icon = {"low": "⚠️", "medium": "🚨", "high": "🚨"}.get(sev, "⚠️")
+                if not owner:
+                    print("flagged with no owner registered: {}".format(note), flush=True)
+                    continue
+                sev = verdict.get("severity", "medium")
                 tg("sendMessage", {
-                    "chat_id": chat_id,
-                    "text": "{} Watchdog flag ({}): {}".format(icon, sev, note),
+                    "chat_id": owner,
+                    "text": "🚨 Clarity flag ({}) in {}:\n{}: {}\n\n{}".format(
+                        sev, chat.get("title", "the group"), name, text, note),
                 })
                 print("flagged in {}: {}".format(chat_id, note), flush=True)
 
