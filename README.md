@@ -1,12 +1,15 @@
-# Clarity — Telegram group watchdog
+# Clarity — Telegram group accountability bot
 
-Sits in a Telegram group chat, reads every message, and flags deception,
-unfair terms, pressure/manipulation tactics, and contradictions in real time.
-**Stealth mode:** the bot never posts in the group. Flags go to you privately
-via DM — the other party just sees a quiet bot.
+Sits in a Telegram group chat, reads every message, and publicly calls out
+deception, unfair terms, pressure/manipulation tactics, and contradictions —
+right in the conversation, as they happen. A neutral third party on the
+record, so nobody can rewrite history.
 
-DM the bot `/start` once to register for private alerts.
+It only speaks when something is genuinely off. Everything else gets silence.
+
+DM the bot `/start` once to take control.
 DM commands: `/pause`, `/resume`, `/status`.
+The bot never responds to commands inside the group.
 
 ## Deploy on Render (free)
 
