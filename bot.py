@@ -16,9 +16,11 @@ Secrets are never written to disk — they come from env only.
 import json
 import os
 import sys
+import threading
 import time
 import urllib.parse
 import urllib.request
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 TOKEN = os.environ.get("TELEGRAM_TOKEN", "")
 OPENAI_KEY = os.environ.get("OPENAI_API_KEY", "")
@@ -172,6 +174,23 @@ def main():
     if not TOKEN or not OPENAI_KEY:
         print("TELEGRAM_TOKEN and OPENAI_API_KEY are required", flush=True)
         sys.exit(1)
+    # Tiny health endpoint so Render free web services stay routable
+    # (pair with an external pinger hitting /health every ~5 min).
+    port = int(os.environ.get("PORT", "10000"))
+
+    class Health(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"ok")
+
+        def log_message(self, *a):
+            pass
+
+    threading.Thread(
+        target=HTTPServer(("0.0.0.0", port), Health).serve_forever,
+        daemon=True,
+    ).start()
     me = tg("getMe", timeout=20)["result"]
     bot_id = me["id"]
     print("watchdog live as @{}".format(me.get("username")), flush=True)

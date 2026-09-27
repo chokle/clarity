@@ -1,9 +1,11 @@
 services:
-  - type: worker
+  - type: web
     name: clarity-watchdog
     runtime: python
+    plan: free
     buildCommand: "pip install --no-cache-dir -r requirements.txt"
     startCommand: "python bot.py"
+    healthCheckPath: /health
     envVars:
       - key: TELEGRAM_TOKEN
         sync: false
