@@ -2,10 +2,11 @@
 
 Sits in a Telegram group chat, reads every message, and flags deception,
 unfair terms, pressure/manipulation tactics, and contradictions in real time.
-Stays silent unless something is genuinely off. Flags are posted publicly
-in the group so everyone sees them.
+**Stealth mode:** the bot never posts in the group. Flags go to you privately
+via DM — the other party just sees a quiet bot.
 
-Commands in the group: `/pause`, `/resume`.
+DM the bot `/start` once to register for private alerts.
+DM commands: `/pause`, `/resume`, `/status`.
 
 ## Deploy on Render (free)
 
