@@ -150,29 +150,28 @@ def describe_message(msg):
 
 
 def handle_dm_command(chat_id, text, state, sender):
-    """Commands in a private chat with the bot. First /start registers owner."""
+    """Private controls. First /start registers the controller."""
     cmd = text.split()[0].split("@")[0].lower()
     if cmd == "/start":
         state["owner_id"] = chat_id
         state["owner_name"] = sender
         save_state(state)
         tg("sendMessage", {"chat_id": chat_id,
-                           "text": "You're registered. Add me to a group and I'll keep "
-                                   "track of the conversation, messaging you here privately "
-                                   "if anything needs your attention. /pause pauses watching, "
-                                   "/resume restarts it."})
+                           "text": "You're in control. I'll call out deception, unfair terms, "
+                                   "and manipulation publicly in the groups I'm added to. "
+                                   "/pause pauses me, /resume restarts me."})
     elif cmd == "/pause":
         state["paused_all"] = True
         save_state(state)
-        tg("sendMessage", {"chat_id": chat_id, "text": "Paused. Nothing is being watched."})
+        tg("sendMessage", {"chat_id": chat_id, "text": "Paused. I'm silent everywhere."})
     elif cmd == "/resume":
         state["paused_all"] = False
         save_state(state)
-        tg("sendMessage", {"chat_id": chat_id, "text": "Resumed. Watching again."})
+        tg("sendMessage", {"chat_id": chat_id, "text": "Resumed. I'm watching again."})
     elif cmd == "/status":
         n = len(state.get("chats", {}))
         tg("sendMessage", {"chat_id": chat_id,
-                           "text": "Watching {} group(s). Alerts come here, never in the group.".format(n)})
+                           "text": "Active in {} group(s).".format(n)})
 
 
 def main():
@@ -233,11 +232,13 @@ def main():
                 else:
                     tg("sendMessage", {"chat_id": chat_id,
                                        "text": "I'm Clarity. Add me to a group chat and I'll keep "
-                                               "track of the conversation for you. Send /start to "
-                                               "register for private alerts."})
+                                               "the conversation honest — calling out deception, "
+                                               "unfair terms, and manipulation out loud. "
+                                               "Send /start to take control."})
                 continue
 
-            # group / supergroup: total silence. Analyze, alert owner by DM only.
+            # group / supergroup: analyze silently, call out publicly.
+            # Never respond to commands in the group.
             if state.get("paused_all"):
                 continue
 
@@ -250,18 +251,12 @@ def main():
             save_state(state)
 
             if verdict and verdict.get("flag"):
-                owner = state.get("owner_id")
                 note = verdict.get("note", "Something looks off.")
-                if not owner:
-                    print("flagged with no owner registered: {}".format(note), flush=True)
-                    continue
-                sev = verdict.get("severity", "medium")
                 tg("sendMessage", {
-                    "chat_id": owner,
-                    "text": "🚨 Clarity flag ({}) in {}:\n{}: {}\n\n{}".format(
-                        sev, chat.get("title", "the group"), name, text, note),
+                    "chat_id": chat_id,
+                    "text": "🔍 Clarity: {}".format(note),
                 })
-                print("flagged in {}: {}".format(chat_id, note), flush=True)
+                print("called out in {}: {}".format(chat_id, note), flush=True)
 
 
 if __name__ == "__main__":
